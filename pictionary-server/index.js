@@ -18,24 +18,34 @@ let users = [];
 
 io.sockets.on('connection', socket => {
 
-    users.push(socket.id)
+    // users.push(socket.id)
     onlineCount++;
-    io.emit('joined', onlineCount, socket.id)
-    console.log('a user connected');
-    socket.on('disconnect', deletedSocket => {
-        console.log('user ' + socket.id + ' disconnected')
-        // console.log(socket)
-        users.splice(users.indexOf(socket.id), 1)
-        onlineCount--;
-        // console.log(users)
-        io.emit('left', onlineCount);
+
+    socket.on('join', (data) => {
+        // console.log(data.username)
+        if(data.username) {
+            users.push(data.username)
+            console.log('users ', users.length)
+            if(users.length === 2) {
+                const drawer = users[chooseDrawer()]
+                io.emit('start', drawer)
+                console.log(drawer)
+            }
+        }
+        socket.on('disconnect', () => {
+            console.log(users)
+            users.splice(users.indexOf(data.username), 1)
+            console.log('disconnected ', data.username);
+            console.log(users);
+            onlineCount--;
+            // io.emit('left', onlineCount);
+        })
+        
     })
-    // console.log(users)
-    // socket.on('play', socket => {
-    //     chosenDrawer = users[Math.floor(Math.random()*users.length)]
-    //     console.log('chosen drawer ', chosenDrawer)
-    //     io.emit('drawer', chosenDrawer);
-//  })
+
+
+    console.log('a user connected');
+
     socket.on("drawing", (data) => {
 
         socket.broadcast.emit("drawing", data);
@@ -43,7 +53,9 @@ io.sockets.on('connection', socket => {
     });
 });
 
-
+function chooseDrawer() {
+    return Math.floor(Math.random()*users.length) 
+}
 
 http.listen(8080, function(){
   console.log('listening on :8080');
