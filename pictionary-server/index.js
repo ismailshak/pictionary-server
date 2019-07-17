@@ -13,7 +13,7 @@ let onlineCount = 0;
 
 let users = [];
 
-io.on('connection', socket => {
+io.sockets.on('connection', socket => {
 
     users.push(socket.id)
     onlineCount++;
@@ -21,7 +21,7 @@ io.on('connection', socket => {
     console.log('a user connected');
     socket.on('disconnect', deletedSocket => {
         console.log('user ' + socket.id + ' disconnected')
-        console.log(socket)
+        // console.log(socket)
         users.splice(users.indexOf(socket.id), 1)
         onlineCount--;
         // console.log(users)
@@ -34,7 +34,9 @@ io.on('connection', socket => {
     //     io.emit('drawer', chosenDrawer);
 //  })
     socket.on("drawing", (data) => {
-        socket.emit("drawing", data);
+
+        socket.broadcast.emit("drawing", data);
+        // console.log(data.x)
     });
 });
 
