@@ -3,6 +3,7 @@ const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 const parser = require('body-parser')
 const usersRouter = require('./routes/users')
+const wordsRouter = require('./routes/words')
 const cors = require("cors")
 
 app.use(cors())
@@ -11,6 +12,7 @@ app.use(parser.urlencoded({ extended: true }));
 app.use(parser.json());
 
 app.use('/api/users', usersRouter)
+app.use('/api/words', usersRouter)
 
 let onlineCount = 0;
 
