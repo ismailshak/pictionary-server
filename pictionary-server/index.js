@@ -3,6 +3,9 @@ const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 const parser = require('body-parser')
 const usersRouter = require('./routes/users')
+const cors = require("cors")
+
+app.use(cors())
 
 app.use(parser.urlencoded({ extended: true }));
 app.use(parser.json());
