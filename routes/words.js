@@ -2,8 +2,8 @@ const express = require('express')
 const router = express.Router()
 
 // Controller to find specific function implementations
-const userController = require('../controllers/users')
+const wordController = require('../controllers/words')
 
-router.post('/random/', userController.pickAWord)
+router.get('/random/', wordController.pickAWord)
 
 module.exports = router;

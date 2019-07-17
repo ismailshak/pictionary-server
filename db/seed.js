@@ -4,10 +4,11 @@ const wordData = require("./data.json");
 
 Word.deleteMany({})
   .then(() => {
-    Game.create(wordData).then(wordDocs => {
+    Word.create(wordData).then(wordDocs => {
       console.log(wordDocs);
     });
   })
+//   .then(_ => process.exit())
   .catch(err => {
     console.log(err);
   });

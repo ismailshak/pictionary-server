@@ -5,6 +5,7 @@ const parser = require('body-parser')
 const usersRouter = require('./routes/users')
 const wordsRouter = require('./routes/words')
 const cors = require("cors")
+const axios = require('axios')
 
 app.use(cors())
 
@@ -12,7 +13,7 @@ app.use(parser.urlencoded({ extended: true }));
 app.use(parser.json());
 
 app.use('/api/users', usersRouter)
-app.use('/api/words', usersRouter)
+app.use('/api/words', wordsRouter)
 
 let onlineCount = 0;
 
@@ -24,15 +25,25 @@ io.sockets.on('connection', socket => {
     onlineCount++;
 
     socket.on('join', (data) => {
+        
         // console.log(data.username)
         if(data.username) {
             users.push(data.username)
             console.log('users ', users.length)
-            if(users.length === 2) {
-                const drawer = users[chooseDrawer()]
-                io.emit('start', drawer)
-                console.log(drawer)
-            }
+            
+            let word;
+            axios.get("http://localhost:8080/api/words/random")
+                .then(res => {
+                    console.log(res.data.name);
+                    word = res.data.name;
+                })
+                .then(_ => {
+                    const drawer = users[chooseDrawer()]
+                    io.emit('start', {drawer: drawer, word: word})
+                    console.log(drawer)
+                })
+                .catch(err => console.log(err))
+            
         }
         socket.on('disconnect', () => {
             console.log(users)
@@ -43,6 +54,9 @@ io.sockets.on('connection', socket => {
             // io.emit('left', onlineCount);
         })
         
+        socket.on('correct', (word) => {
+            io.emit('winner', {winner: data.username, word: word})
+        })
     })
 
 
