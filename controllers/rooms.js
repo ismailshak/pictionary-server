@@ -15,6 +15,12 @@ module.exports = {
             res.json(room)
         })
     },
+    edit: (req, res) => {
+        Room.findByIdAndUpdate(req.params.id, req.body, {new: true}).then(room => {
+            res.json(room)
+        })
+        .catch(err => res.json(err))
+    },
     delete: (req, res) => {
         Room.findOneAndDelete({ _id: req.params.id }).then(room => res.json(room));
     }
