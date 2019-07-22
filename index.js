@@ -17,7 +17,7 @@ app.use('/api/users', usersRouter)
 app.use('/api/words', wordsRouter)
 app.use('/api/rooms', roomsRouter)
 
-let onlineCount = 0;
+// let onlineCount = 0;
 
 let users = [];
 
@@ -25,35 +25,34 @@ let users = [];
 io.sockets.on('connection', socket => {
     let room;
 
+    // Event occurs when a user creates a room
     socket.on('roomCreated', data => {
         room = data.room;
 
         socket.join(room, () => {
-                console.log(`${data.user} joined room ${data.room}`)
-                
+                // console.log(`${data.user} joined room ${data.room}`)
             });
 
+        // Adds the socket id to user info pushed into the array
         let finalUserInfo = {
             id: socket.id,
             ...data
         }
+
         users.push(finalUserInfo)
+
+        // When host starts game, a random word is generated and sent to all clients in the room
         socket.on('begin', data => {
             axios.get("https://totallynotpictionary.herokuapp.com/api/words/random")
                 .then(res => {
-                    // console.log(res.data.name);
                     word = res.data.name;
-                    console.log('data: ', data)
                 })
-                // .then(_ => {
-                //     // drawer = currentUsersInRoom[chooseDrawer()]
-                    
-                //     // console.log(drawer.user)
-                // })
                 .then(_ => {
-                    // CHECK IF THERE AT LEAST 2 PLAYERS IN HERE, IF NOT SEND NOT ENOUGH PLAYERS JOINED
+                    // TODO: CHECK IF THERE AT LEAST 2 PLAYERS IN HERE, IF NOT SEND NOT ENOUGH PLAYERS JOINED
+
+                    // Gets a list of all users currently in this room, pushes them to an array
+                    // (so server can pick a random player to become thedrawer)
                     var currentClients = io.sockets.adapter.rooms[data].sockets;
-                    console.log('current clients ', currentClients)
                     currentUsersInRoom = []
                     for (var clientId in currentClients ) {
                         users.forEach(user => {
@@ -61,123 +60,45 @@ io.sockets.on('connection', socket => {
                                 currentUsersInRoom.push(user)
                             }
                         })
-                        // console.log(currentUsersInRoom)
                     }
                     drawer = currentUsersInRoom[chooseDrawer(currentUsersInRoom.length)]
-                    console.log(drawer)
+                    // Send who the drawer is and random word to users in the room
                     io.emit('start', {drawer: drawer.user, word: word, room: data})
                 })
                 .catch(err => console.log(err))
         })
-        console.log(users)
+
         const clients = io.sockets.adapter.rooms[data.room].sockets;  
         const numClients = (typeof clients !== 'undefined') ? Object.keys(clients).length : 0;
         io.emit('users', numClients)
-
-        // if(numClients === 1) {
-        //     let drawer;
-        //     setTimeout(() => {
-                
-        //     }, 2000)
-        // }
-        // io.in(room).emit("users", currentUsersInRoom)
         
     })
 
+    // This removes the waiting for host/click start to begin screen from all clients screens
+    // Signalling the game has begun
     socket.on('clearInstructions', () => {
         io.emit('clearInstructions')
     })
 
+    // A user typed the correct answer, send to the rest of the client who this is
     socket.on('correct', data => {
         io.emit('winner', data)
     })
 
-    // socket.on('leavingRoom', room => {
-    //     // indexToRemove = users.findIndex(user => {
-    //     //     return user.user === data;
-    //     // })
-    //     // users.splice(indexToRemove, 1)
-    //     // console.log('removed ', data)
-    //     console.log(room)
-    //     socket.leave(room)
-    //     console.log('left room')
-    //     const clients = io.sockets.adapter.rooms[room].sockets;  
-    //     const numClients = (typeof clients !== 'undefined') ? Object.keys(clients).length : 0;
-    //     io.emit('users', numClients)
-    // })
-
+    // Event for when the drawer starts drawing on the canvas
+    // Sends the coordinates of the lines to the rest of the clients + the room number
+    // (to filter out which room gets these canvas information)
     socket.on("drawing", (data) => {
-        // console.log(currentUsersInRoom.length)
-        // for(let i = 0; i < currentUsersInRoom.length; i++) {
-        //     socket.broadcast.to(currentUsersInRoom[i].id).emit("drawing", data);
-        //     console.log(currentUsersInRoom[i].id)
-        // }
         let send = {
             room: room,
             ...data
         }
         io.sockets.emit('drawing', send)
-        // console.log(io.sockets.adapter.rooms[data.room].sockets);
-
-        // io.in(data.room).emit('drawing', data)
-        // console.log(socket.id)
-        // console.log(io.sockets.adapter.rooms[data.room].sockets);
-        // var clients = io.sockets.adapter.rooms[data.room].sockets;
-
-        // for (var clientId in clients ) {
-        //     console.log(clientId)
-        //     //this is the socket of each client in the room.
-        //     // var clientSocket = io.sockets.connected[clientId];
-
-        //     //you can do whatever you need with this
-        //     io.to(`${clientId}`).emit('drawing', data);
-
-        // }
         
     });
-    
-    // users.push(socket.id)
-    onlineCount++;
-
-    // socket.on('join', (data) => {
-        
-    //     // console.log(data.username)
-    //     if(data.username) {
-    //         users.push(data.username)
-    //         console.log('users ', users.length)
-            
-    //         let word;
-    //         axios.get("http://localhost:8080/api/words/random")
-    //             .then(res => {
-    //                 console.log(res.data.name);
-    //                 word = res.data.name;
-    //             })
-    //             .then(_ => {
-    //                 const drawer = users[chooseDrawer()]
-    //                 io.emit('start', {drawer: drawer, word: word})
-    //                 console.log(drawer)
-    //             })
-    //             .catch(err => console.log(err))
-            
-    //     }
-    //     socket.on('disconnect', () => {
-    //         console.log(users)
-    //         users.splice(users.indexOf(data.username), 1)
-    //         console.log('disconnected ', data.username);
-    //         console.log(users);
-    //         onlineCount--;
-    //         // io.emit('left', onlineCount);
-    //     })
-        
-    //     socket.on('correct', (word) => {
-    //         io.emit('winner', {winner: data.username, word: word})
-    //     })
-    // })
-
-
-    console.log('a user connected');
 });
 
+// Returns an index to a user in an array of current players in a room
 function chooseDrawer(length) {
     return Math.floor(Math.random()*length) 
 }
