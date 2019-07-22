@@ -39,7 +39,7 @@ io.sockets.on('connection', socket => {
         }
         users.push(finalUserInfo)
         socket.on('begin', data => {
-            axios.get("http://localhost:8080/api/words/random")
+            axios.get("https://totallynotpictionary.herokuapp.com/api/words/random")
                 .then(res => {
                     // console.log(res.data.name);
                     word = res.data.name;
